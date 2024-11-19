@@ -12,9 +12,6 @@ from torch.nn.utils import clip_grad_norm_
 from Utils.io_utils import instantiate_from_config, get_model_parameters_info
 
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
-
-
 def cycle(dl):
     while True:
         for data in dl:
@@ -36,7 +33,7 @@ class Trainer(object):
         self.logger = logger
 
         self.results_folder = Path(
-            config["solver"]["results_folder"] + f"_{model.seq_length}"
+            f"{self.args.save_dir}/{config['solver']['results_folder']}"
         )
         os.makedirs(self.results_folder, exist_ok=True)
 
@@ -61,37 +58,26 @@ class Trainer(object):
             self.logger.log_info(str(get_model_parameters_info(self.model)))
         self.log_frequency = 100
 
-    def save(self, milestone, verbose=False):
+    def save(self, verbose=False):
+        save_dir = f"{self.results_folder}/checkpoint_{self.args.client_id}.pt"
         if self.logger is not None and verbose:
-            self.logger.log_info(
-                "Save current model to {}".format(
-                    str(self.results_folder / f"checkpoint-{milestone}.pt")
-                )
-            )
+            self.logger.log_info(f"Save current model to {save_dir}")
         data = {
-            "step": self.step,
             "model": self.model.state_dict(),
             "ema": self.ema.state_dict(),
             "opt": self.opt.state_dict(),
         }
-        torch.save(data, str(self.results_folder / f"checkpoint-{milestone}.pt"))
+        torch.save(data, save_dir)
 
-    def load(self, milestone, verbose=False):
+    def load(self, verbose=False):
+        save_dir = f"{self.results_folder}/checkpoint_{self.args.client_id}.pt"
         if self.logger is not None and verbose:
-            self.logger.log_info(
-                "Resume from {}".format(
-                    str(self.results_folder / f"checkpoint-{milestone}.pt")
-                )
-            )
+            self.logger.log_info(f"Resume from {save_dir}")
         device = self.device
-        data = torch.load(
-            str(self.results_folder / f"checkpoint-{milestone}.pt"), map_location=device
-        )
+        data = torch.load(save_dir, map_location=device)
         self.model.load_state_dict(data["model"])
-        self.step = data["step"]
-        self.opt.load_state_dict(data["opt"])
         self.ema.load_state_dict(data["ema"])
-        self.milestone = milestone
+        self.opt.load_state_dict(data["opt"])
 
     def train(self):
         device = self.device
@@ -102,7 +88,8 @@ class Trainer(object):
                 "{}: start training...".format(self.args.name), check_primary=False
             )
 
-        with tqdm(initial=step, total=self.train_num_steps) as pbar:
+        total_losses = 0.0
+        with tqdm(initial=step, total=self.train_num_steps, disable=True) as pbar:
             while step < self.train_num_steps:
                 total_loss = 0.0
                 for _ in range(self.gradient_accumulate_every):
@@ -112,6 +99,7 @@ class Trainer(object):
                     loss.backward()
                     total_loss += loss.item()
 
+                total_losses += total_loss
                 pbar.set_description(f"loss: {total_loss:.6f}")
 
                 clip_grad_norm_(self.model.parameters(), 1.0)
@@ -149,6 +137,8 @@ class Trainer(object):
             self.logger.log_info(
                 "Training done, time: {:.2f}".format(time.time() - tic)
             )
+
+        return total_losses / self.train_num_steps
 
     def sample(self, num, size_every, shape=None):
         if self.logger is not None:

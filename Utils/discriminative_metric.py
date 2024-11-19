@@ -19,6 +19,10 @@ Output: discriminative score (np.abs(classification accuracy - 0.5))
 """
 
 # Necessary Packages
+import tensorflow.python.util.deprecation as deprecation
+
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+
 import tensorflow as tf
 import tensorflow._api.v2.compat.v1 as tf1
 import numpy as np
@@ -149,7 +153,7 @@ def discriminative_score_metrics(ori_data, generated_data):
     from tqdm.auto import tqdm
 
     # Training step
-    for itt in tqdm(range(iterations), desc="training", total=iterations):
+    for itt in tqdm(range(iterations), desc="training", total=iterations, disable=True):
 
         # Batch setting
         X_mb, T_mb = batch_generator(train_x, train_t, batch_size)

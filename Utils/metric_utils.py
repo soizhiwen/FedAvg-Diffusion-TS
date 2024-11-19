@@ -1,4 +1,5 @@
 ## Necessary Packages
+import os
 import scipy.stats
 import numpy as np
 import seaborn as sns
@@ -7,13 +8,15 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
+plt.rcParams.update({"font.family": "serif"})
 
 def display_scores(results):
     mean = np.mean(results)
     sigma = scipy.stats.sem(results)
     sigma = sigma * scipy.stats.t.ppf((1 + 0.95) / 2.0, 5 - 1)
     #  sigma = 1.96*(np.std(results)/np.sqrt(len(results)))
-    print("Final Score: ", f"{mean} \xB1 {sigma}")
+    # print("Final Score: ", f"{mean} \xB1 {sigma}")
+    return mean, sigma
 
 
 def train_test_divide(data_x, data_x_hat, data_t, data_t_hat, train_rate=0.8):
@@ -79,7 +82,14 @@ def extract_time(data):
     return time, max_seq_len
 
 
-def visualization(ori_data, generated_data, analysis, compare=3000):
+def visualization(
+    ori_data,
+    generated_data,
+    analysis,
+    compare=3000,
+    name="",
+    save_dir="",
+):
     """Using PCA or tSNE for generated and original data visualization.
 
     Args:
@@ -123,6 +133,8 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
     ]
 
     if analysis == "pca":
+        save_dir = f"{save_dir}/{analysis}"
+        os.makedirs(save_dir, exist_ok=True)
         # PCA Analysis
         pca = PCA(n_components=2)
         pca.fit(prep_data)
@@ -136,7 +148,7 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
             pca_results[:, 1],
             c=colors[:anal_sample_no],
             alpha=0.2,
-            label="Original",
+            label="Real",
         )
         plt.scatter(
             pca_hat_results[:, 0],
@@ -147,18 +159,20 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
         )
 
         ax.legend()
-        plt.title("PCA plot")
-        plt.xlabel("x-pca")
-        plt.ylabel("y_pca")
-        plt.show()
+        # plt.title("PCA plot")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.savefig(f"{save_dir}/{analysis}_{name}.pdf", bbox_inches="tight")
+        # plt.show()
 
     elif analysis == "tsne":
-
+        save_dir = f"{save_dir}/{analysis}"
+        os.makedirs(save_dir, exist_ok=True)
         # Do t-SNE Analysis together
         prep_data_final = np.concatenate((prep_data, prep_data_hat), axis=0)
 
         # TSNE anlaysis
-        tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+        tsne = TSNE(n_components=2, perplexity=40, n_iter=300)
         tsne_results = tsne.fit_transform(prep_data_final)
 
         # Plotting
@@ -169,7 +183,7 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
             tsne_results[:anal_sample_no, 1],
             c=colors[:anal_sample_no],
             alpha=0.2,
-            label="Original",
+            label="Real",
         )
         plt.scatter(
             tsne_results[anal_sample_no:, 0],
@@ -181,13 +195,15 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
 
         ax.legend()
 
-        plt.title("t-SNE plot")
-        plt.xlabel("x-tsne")
-        plt.ylabel("y_tsne")
-        plt.show()
+        # plt.title("t-SNE plot")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.savefig(f"{save_dir}/{analysis}_{name}.pdf", bbox_inches="tight")
+        # plt.show()
 
     elif analysis == "kernel":
-
+        save_dir = f"{save_dir}/{analysis}"
+        os.makedirs(save_dir, exist_ok=True)
         # Visualization parameter
         # colors = ["red" for i in range(anal_sample_no)] + ["blue" for i in range(anal_sample_no)]
 
@@ -197,7 +213,7 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
             hist=False,
             kde=True,
             kde_kws={"linewidth": 5},
-            label="Original",
+            label="Real",
             color="red",
         )
         sns.distplot(
@@ -216,10 +232,10 @@ def visualization(ori_data, generated_data, analysis, compare=3000):
         plt.ylabel("Data Density Estimate")
         # plt.rcParams['pdf.fonttype'] = 42
 
-        # plt.savefig(str(args.save_dir)+"/"+args.model1+"_histo.png", dpi=100,bbox_inches='tight')
+        plt.savefig(f"{save_dir}/{analysis}_{name}.pdf", bbox_inches="tight")
         # plt.ylim((0, 12))
-        plt.show()
-        plt.close()
+        # plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":

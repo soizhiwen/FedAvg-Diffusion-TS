@@ -17,6 +17,10 @@ Note: Use Post-hoc RNN to predict one-step ahead (last feature)
 """
 
 # Necessary Packages
+import tensorflow.python.util.deprecation as deprecation
+
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+
 import tensorflow as tf
 import tensorflow._api.v2.compat.v1 as tf1
 
@@ -99,7 +103,7 @@ def predictive_score_metrics(ori_data, generated_data):
     from tqdm.auto import tqdm
 
     # Training using Synthetic dataset
-    for itt in tqdm(range(iterations), desc="training", total=iterations):
+    for itt in tqdm(range(iterations), desc="training", total=iterations, disable=True):
 
         # Set mini-batch
         idx = np.random.permutation(len(generated_data))

@@ -40,32 +40,20 @@ solver:
       verbose: False
 
 dataloader:
-  train_dataset:
-    target: Utils.Data_utils.mujoco_dataset.MuJoCoDataset
-    params:
-      num: 10000
-      dim: 14
-      window: 24  # seq_length
-      save2npy: True
-      neg_one_to_one: True
-      seed: 123
-      period: train
-
-  test_dataset:
-    target: Utils.Data_utils.mujoco_dataset.MuJoCoDataset
-    params:
-      num: 1000
-      dim: 14
-      window: 24  # seq_length
-      save2npy: True
-      neg_one_to_one: True
-      seed: 123
-      style: separate
-      period: test
-      distribution: geometric
-    coefficient: 1.0e-2
-    step_size: 5.0e-2
-    sampling_steps: 250
+  target: Utils.Data_utils.real_datasets.CustomDataset
+  params:
+    name: mujoco
+    train_size: 0.8
+    data_root: ./Data/datasets/labeled_mujoco.npy
+    window: 24  # seq_length
+    save2npy: True
+    neg_one_to_one: True
+    seed: 123
+    style: separate
+    distribution: geometric
+  coefficient: 1.0e-2
+  step_size: 5.0e-2
+  sampling_steps: 250
 
   batch_size: 128
   sample_size: 256

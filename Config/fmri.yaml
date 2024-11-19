@@ -19,10 +19,10 @@ model:
 
 solver:
   base_lr: 1.0e-5
-  max_epochs: 15000
+  max_epochs: 25000
   results_folder: ./Checkpoints_fmri
   gradient_accumulate_every: 2
-  save_cycle: 1500  # max_epochs // 10
+  save_cycle: 2500  # max_epochs // 10
   ema:
     decay: 0.995
     update_interval: 10
@@ -31,7 +31,7 @@ solver:
     target: engine.lr_sch.ReduceLROnPlateauWithWarmup
     params:
       factor: 0.5
-      patience: 3000
+      patience: 5000
       min_lr: 1.0e-5
       threshold: 1.0e-1
       threshold_mode: rel
@@ -40,34 +40,20 @@ solver:
       verbose: False
 
 dataloader:
-  train_dataset:
-    target: Utils.Data_utils.real_datasets.fMRIDataset
-    params:
-      name: fMRI
-      proportion: 1.0  # Set to rate < 1 if training conditional generation
-      data_root: ./Data/datasets/fMRI
-      window: 24  # seq_length
-      save2npy: True
-      neg_one_to_one: True
-      seed: 123
-      period: train
-
-  test_dataset:
-    target: Utils.Data_utils.real_datasets.fMRIDataset
-    params:
-      name: fMRI
-      proportion: 0.9  # rate
-      data_root: ./Data/datasets/fMRI
-      window: 24  # seq_length
-      save2npy: True
-      neg_one_to_one: True
-      seed: 123
-      period: test
-      style: separate
-      distribution: geometric
-    coefficient: 1.0e-2
-    step_size: 5.0e-2
-    sampling_steps: 250
+  target: Utils.Data_utils.real_datasets.CustomDataset
+  params:
+    name: fMRI
+    train_size: 0.8
+    data_root: ./Data/datasets/fMRI/labeled_sim4.npy
+    window: 24  # seq_length
+    save2npy: True
+    neg_one_to_one: True
+    seed: 123
+    style: separate
+    distribution: geometric
+  coefficient: 1.0e-2
+  step_size: 5.0e-2
+  sampling_steps: 250
 
   batch_size: 64
   sample_size: 256

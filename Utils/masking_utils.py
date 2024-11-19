@@ -167,9 +167,9 @@ def geom_noise_mask_single(L, lm, masking_ratio):
     """
     keep_mask = np.ones(L, dtype=bool)
     p_m = (
-        1 / lm
+        1 / lm if lm > 0 else 0
     )  # probability of each masking sequence stopping. parameter of geometric distribution.
-    p_u = p_m * masking_ratio / (1 - masking_ratio)
+    p_u = p_m * masking_ratio / (1 - masking_ratio) if masking_ratio < 1.0 else 0
     # probability of each unmasked sequence stopping. parameter of geometric distribution.
     p = [p_m, p_u]
 

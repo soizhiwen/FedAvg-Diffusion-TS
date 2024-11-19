@@ -223,6 +223,7 @@ class Diffusion_TS(nn.Module):
             reversed(range(0, self.num_timesteps)),
             desc="sampling loop time step",
             total=self.num_timesteps,
+            disable=True,
         ):
             img, _ = self.p_sample(img, t)
         return img
@@ -246,7 +247,11 @@ class Diffusion_TS(nn.Module):
         )  # [(T-1, T-2), (T-2, T-3), ..., (1, 0), (0, -1)]
         img = torch.randn(shape, device=device)
 
-        for time, time_next in tqdm(time_pairs, desc="sampling loop time step"):
+        for time, time_next in tqdm(
+            time_pairs,
+            desc="sampling loop time step",
+            disable=True,
+        ):
             time_cond = torch.full((batch,), time, device=device, dtype=torch.long)
             pred_noise, x_start, *_ = self.model_predictions(
                 img, time_cond, clip_x_start=clip_denoised
@@ -353,7 +358,9 @@ class Diffusion_TS(nn.Module):
         img = torch.randn(shape, device=device)
 
         for time, time_next in tqdm(
-            time_pairs, desc="conditional sampling loop time step"
+            time_pairs,
+            desc="conditional sampling loop time step",
+            disable=True,
         ):
             time_cond = torch.full((batch,), time, device=device, dtype=torch.long)
             pred_noise, x_start, *_ = self.model_predictions(
@@ -408,6 +415,7 @@ class Diffusion_TS(nn.Module):
             reversed(range(0, self.num_timesteps)),
             desc="conditional sampling loop time step",
             total=self.num_timesteps,
+            disable=True,
         ):
             img = self.p_sample_infill(
                 x=img,
